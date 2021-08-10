@@ -25,33 +25,62 @@ const renderCountry = function (data, className = '') {
   countriesContainer.style.opacity = 1;
 };
 
-const getCountryData = function (country) {
-  const request = new XMLHttpRequest();
-  request.open('GET', `https://restcountries.eu/rest/v2/name/${country}`);
-  request.send();
+// const getCountryData = function (country) {
+//   const request = new XMLHttpRequest();
+//   request.open('GET', `https://restcountries.eu/rest/v2/name/${country}`);
+//   request.send();
 
-  request.addEventListener('load', function () {
-    const [data] = JSON.parse(this.responseText);
-    //Render country 1
-    renderCountry(data);
+//   request.addEventListener('load', function () {
+//     const [data] = JSON.parse(this.responseText);
+//     //Render country 1
+//     renderCountry(data);
 
-    //Get neighbour country
-    const [neighbour] = data.borders;
+//     //Get neighbour country
+//     const [neighbour] = data.borders;
 
-    if (!neighbour) return;
+//     if (!neighbour) return;
 
-    const request2 = new XMLHttpRequest();
-    request2.open('GET', `https://restcountries.eu/rest/v2/alpha/${neighbour}`);
-    request2.send();
+//     const request2 = new XMLHttpRequest();
+//     request2.open('GET', `https://restcountries.eu/rest/v2/alpha/${neighbour}`);
+//     request2.send();
 
-    request2.addEventListener('load', function () {
-      const data2 = JSON.parse(this.responseText);
+//     request2.addEventListener('load', function () {
+//       const data2 = JSON.parse(this.responseText);
 
-      renderCountry(data2, 'neighbour');
-    });
-  });
-};
+//       renderCountry(data2, 'neighbour');
+//     });
+//   });
+// };
 
-getCountryData('nepal');
+// getCountryData('nepal');
 // getCountryData('usa');
 // getCountryData('canada');
+
+const renderError = function (msg) {
+  countriesContainer.insertAdjacentText('beforeend', msg);
+  countriesContainer.style.opacity = 1;
+};
+
+const getCountryData = function (country) {
+  //country 1
+  fetch(`https://restcountries.eu/rest/v2/name/${country}`)
+    .then(response => response.json())
+    .then(data => {
+      renderCountry(data[0]);
+      const neighbour = data[0].borders[0];
+
+      if (!neighbour) return;
+
+      //country 2
+      return fetch(`https://restcountries.eu/rest/v2/alpha/${neighbour}`);
+    })
+    .then(response => response.json())
+    .then(data => renderCountry(data, 'neighbour'))
+    .catch(err => {
+      renderError(`Something went wrong ${err.message}.`);
+    });
+};
+
+btn.addEventListener('click', function () {
+  getCountryData('nepal');
+});
