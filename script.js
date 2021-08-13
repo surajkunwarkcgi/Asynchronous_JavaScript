@@ -220,12 +220,12 @@ const wait = function (seconds) {
   });
 };
 
-wait(2)
-  .then(() => {
-    console.log('I waited for 2 seconds');
-    return wait(1);
-  })
-  .then(() => console.log('I waited for 1 second'));
+// wait(2)
+//   .then(() => {
+//     console.log('I waited for 2 seconds');
+//     return wait(1);
+//   })
+//   .then(() => console.log('I waited for 1 second'));
 
 //Promisifying Geolocation API
 const getPosition = function () {
@@ -270,20 +270,44 @@ const getPosition = function () {
 
 //Async/Await
 const whereAMI = async function () {
-  //Geolocation
-  const pos = await getPosition();
-  const { latitude: lat, longitude: lng } = pos.coords;
+  try {
+    //Geolocation
+    const pos = await getPosition();
+    const { latitude: lat, longitude: lng } = pos.coords;
 
-  //Reverse Geocoding
-  const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
-  const dataGeo = await resGeo.json();
+    //Reverse Geocoding
+    const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+    if (!resGeo.ok) throw new Error('Problem getting location data');
+    const dataGeo = await resGeo.json();
 
-  //country data
-  const res = await fetch(
-    `https://restcountries.eu/rest/v2/name/${dataGeo.country}`
-  );
-  const data = await res.json();
-  renderCountry(data[0]);
+    //country data
+    const res = await fetch(
+      `https://restcountries.eu/rest/v2/name/${dataGeo.country}`
+    );
+
+    if (!res.ok) throw new Error('Problem getting country');
+
+    const data = await res.json();
+    renderCountry(data[0]);
+
+    return dataGeo.city;
+  } catch (err) {
+    renderError(`${err.message}`);
+
+    //Reject promise returned from async function
+    throw err;
+  }
 };
 
-whereAMI();
+console.log('Will get location.');
+
+//Returning values from Async functions
+(async function () {
+  try {
+    const city = await whereAMI();
+    console.log(`${city}`);
+  } catch (err) {
+    console.error(`${err.message}`);
+  }
+  console.log('Finished getting location.');
+})();
